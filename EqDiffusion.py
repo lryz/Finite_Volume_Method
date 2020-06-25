@@ -5,6 +5,7 @@ from random import *
 import numpy as np
 from sympy.interactive import init_printing
 from sympy.interactive import printing
+
 x = sp.Symbol('x')
 t = sp.Symbol('t')
 u = sp.Function('u')
@@ -23,6 +24,7 @@ unimoinsun = sp.Symbol('u_i-1__n')
 U = sp.Symbol('U')
 Un = sp.Symbol('U__n')
 Unplusun = sp.Symbol('U__n+1')
+
 """
 Pour généraliser les fonctions on doit pouvoir rajouter une condition vérifiant si 
 le type est une somme ou une multiplication et utiliser une décomposition puis reconstruction en conséquence.
@@ -53,7 +55,8 @@ def initialisation_aleatoire(nbr_pts):
     u=np.ones(nbr_pts)
     for i in range(0,nbr_pts):
         u[i]=u[i]+random()
-    return u 
+    return u eq1eq1
+
 def calcul_milieu(debut,fin):
     return (debut+fin)/2
 
@@ -146,6 +149,9 @@ def flux_dimension1(equation):
 
 
 def reconstitution_differences_finies(equation):
+    """
+    Calcul du flux à l'interface.
+    """
     tmp = equation.rhs.args
     F = tmp[0]
     argsF = []
