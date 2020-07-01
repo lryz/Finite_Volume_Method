@@ -1,7 +1,7 @@
 import sympy as sp
 import numpy as np
 from pynite.tools import *
-
+import matplotlib.pyplot as plt
 x = sp.Symbol('x')
 t = sp.Symbol('t')
 u = sp.Function('u')
@@ -92,7 +92,7 @@ def equation_factorisation(equation):
                             args_variables[index][2]=np.prod(coef)*test[k][0]
     return (args_variables, symbole_variable)
 
-def matrix_equation(explicite_factorise,maillage,pastemps):
+def matrix_equation(explicite_factorise,maillage):
     equations = explicite_factorise[0]
     variables = explicite_factorise[1]
     taille = len(maillage)
@@ -117,3 +117,73 @@ def matrix_equation(explicite_factorise,maillage,pastemps):
         else :
             matrix_sympy.append(sp.eye(taille) - sp.Matrix(matrix[i]))
     return matrix_sympy
+
+
+
+####WORK IN PROGRESS
+
+def animation_matrix(sys_matrix,vectors_init, mesh, start, end, time_step):
+    fig, ax = plt.subplots( nrows=1, ncols=1 )
+    ax.set( ylim=(0, 1))
+    ax.plot(mesh,vectors_init[0])
+    while start < end :
+        start = start + time_step
+        matrix_sys = calcul_matrices(sys_matrix,vectors_init, mesh, start, end, time_step)
+        for i in range(0,len(vectors_init)):
+            vectors_init[len(vectors_init)-1-i] = np.dot(matrix_sys[len(vectors_init)
+            -1-i][0],vectors_init[0]) 
+            + np.dot(matrix_sys[len(vectors_init)-1-i][1],vectors_init[1]) 
+        ax.clear()
+
+        ax.plot(mesh,vectors_init[0],'r')
+        plt.pause(0.1)
+
+def calcul_matrices(sys_matrix,vectors, mesh, start, end, time_step):
+    ######
+    #ça fonctionne pour un maillage régulier mais ça marchera surement pas pour un autre type de maillage (jsp comment remplacer xi-1 au bord gauche et x+1 au bord droite)
+    n = len(mesh)
+    cpt=0
+    for lines in sys_matrix :
+        for matrix in lines :
+            symbols=[]
+            for tmp in range(0,len(matrix)):
+                pre_symbols(matrix[tmp],symbols)
+            for j in range(0,len(matrix[0 : n])):
+                if len(symbols)>0 :
+                    for tmp in range(0,len(symbols)):
+                        matrix[j]=matrix[j].subs({symbols[tmp](xiplusundemi,tn)
+                         : (vectors[tmp][1]+vectors[tmp][2])/2,symbols[tmp](ximoinsundemi,tn) : 
+                         (vectors[tmp][0]+vectors[tmp][1])/2})
+                matrix[j]=matrix[j].subs({xi : mesh[1], Deltat : time_step,
+                     xiplusun : mesh[2], ximoinsun : mesh[0],
+                     xiplusundemi : middle(mesh[1],mesh[2]),
+                     ximoinsundemi : middle(mesh[1],mesh[0]) })
+            for i in range(1,n-1):
+                for j in range(0,len(matrix[i*n:(i+1)*n])) :
+                    if len(symbols)>0 :
+                        for tmp in range(0,len(symbols)):
+                            matrix[i*n+j]=matrix[i*n+j].subs({symbols[tmp](
+                                xiplusundemi,tn)
+                         : (vectors[tmp][i]+vectors[tmp][i+1])/2,
+                         symbols[tmp](ximoinsundemi,tn) : 
+                         (vectors[tmp][i]+vectors[tmp][i-1])/2})
+                    matrix[i*n+j]=matrix[i*n+j].subs({xi : mesh[i], Deltat : time_step,
+                     xiplusun : mesh[i+1], ximoinsun : mesh[i-1],
+                     xiplusundemi : middle(mesh[i],mesh[i+1]),
+                     ximoinsundemi : middle(mesh[i],mesh[i-1])})
+            for j in range(0,len(matrix[(n-1)*n : n*n])):
+                if len(symbols)>0 :
+                    for tmp in range(0,len(symbols)):
+                        matrix[(n-1)*n + j]=matrix[(n-1)*n + j].subs(
+                            {symbols[tmp](xiplusundemi,tn)
+                         : (vectors[tmp][len(vectors[tmp])-1]+
+                            vectors[tmp][len(vectors[tmp])-2])/2
+                         ,symbols[tmp](ximoinsundemi,tn) : 
+                         (vectors[tmp][len(vectors[tmp])-3]+vectors[tmp][len(vectors[tmp])-2])/2})
+                matrix[(n-1)*n + j]=matrix[(n-1)*n + j].subs({xi : mesh[n-2], Deltat : time_step,
+                     ximoinsun : mesh[n-3],xiplusun : mesh[n-1],
+                     xiplusundemi : middle(mesh[n-1],mesh[n-2]),
+                     ximoinsundemi : middle(mesh[n-3],mesh[n-2]),})
+            matrix = np.dot(matrix,sp.eye(n))
+            cpt+=1
+    return sys_matrix

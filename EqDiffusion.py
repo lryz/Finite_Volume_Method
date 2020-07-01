@@ -263,7 +263,8 @@ def creation_matrice(coefs,maillage, pastemps, condition_de_bord = "Neumann"):
     matrix[taille-1][taille-1]=coefs[0].subs({e : maillage[0], c : maillage[1],
          d : maillage[2], Deltat : pastemps, a : calcul_milieu(0,1),
           b : calcul_milieu(1,2) })
-    matrix[taille-1][taille-2]=-coefs[0].subs({e : maillage[0], c : maillage[1],
+    matrix[taille-1][taille-2]=-coefs[0].subs({e : maillage[0], 
+        c : maillage[1],
          d : maillage[2], Deltat : pastemps, a : calcul_milieu(0,1),
           b : calcul_milieu(1,2) })
     I=np.eye(len(maillage))

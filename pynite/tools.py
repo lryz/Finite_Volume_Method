@@ -13,15 +13,103 @@ xiplusun = sp.Symbol('x_i+1')
 ximoinsun = sp.Symbol('x_i-1')
 
 def middle(start,end):
+    """returns the middle of an interval
+    Parameters
+    ----------
+    start: float
+        left bound of interval
+    end: float
+        right bound of interval
+
+    Returns
+    -------
+    (start+end)/2:
+        middle of interval
+    """
     return (start+end)/2
 
+def pre_xiplusundemi(expr,test_variable):
+    """
+    Parameters
+    ----------
+    expr: sympy.core expression
+        any expression 
+    test_variable: empty list
+        
+    Modifies
+    -------
+    True is added to test_variable if xi+1/2 is in the expression 
+    """
+    for arg in expr.args:
+        if arg == xiplusundemi :
+            test_variable.append(True)
+        pre_xiplusundemi(arg,test_variable)
+
+def pre_ximoinsundemi(expr,test_variable):
+    """
+    Parameters
+    ----------
+    expr: sympy.core expression
+        any expression 
+    test_variable: empty list
+        
+    Modifies
+    -------
+    test_variable : True is added to test_variable if xi-1/2 is 
+    in the expression 
+    """
+    for arg in expr.args:
+        if arg == ximoinsundemi :
+            test_variable.append(True)
+        pre_ximoinsundemi(arg,test_variable)
+
+def pre_symbols(expr,symbols):
+    """
+    Parameters
+    ----------
+    expr: sympy.core expression
+        any expression 
+    symbols: empty list
+        
+    Modifies
+    -------
+    symbols : any function that is in the expression is added to symbols
+    """
+    for arg in expr.args:
+        if type(type(arg)) == sp.core.function.UndefinedFunction :
+            if type(arg) not in symbols :
+                symbols.append(type(arg))
+        pre_symbols(arg,symbols)
+
 def decomposition_add(expr, ls) :
+    """
+    Parameters
+    ----------
+    expr: sympy.core.add.Add
+        any addition
+    ls: empty list
+        
+    Modifies
+    -------
+    ls : add to ls all terms of the addition 
+    """
     if type(expr)==sp.core.add.Add :
         for arg in expr.args :
             ls.append(arg)
             decomposition_add(arg,ls)
 
 def decomposition_mul(expr, ls):
+    """
+    Parameters
+    ----------
+    expr: sympy.core.mul.Mul
+        any multiplication
+    ls: empty list
+        
+    Modifies
+    -------
+    ls : add to ls all terms of the multiplication
+    """
     if type(expr)==sp.core.mul.Mul :
         for arg in expr.args :
             ls.append(arg)
@@ -29,10 +117,16 @@ def decomposition_mul(expr, ls):
             
 def decomposition(eq):
     """
-    Une seule ligne, on ne met pas le système entier
-    SI on veut tout le système, il faut faire une boucle
-    for i in sys
-        decomposition(i)
+    Parameters
+    ----------
+    eq: sympy.core 
+        any equation
+        
+    Returns
+    -------
+    [mullistleft,mulistright]:
+        a list of lists of lists that is interprated like this :
+        [[a]+[[c]*[b]] = [[a]*[b]]+[c]]
     """
     eqleft = sp.expand(eq.lhs)
     eqright = sp.expand(eq.rhs)
@@ -64,10 +158,17 @@ def decomposition(eq):
 
 def recomposition(terms_list):
     """
-    Une seule ligne, on ne met pas le système entier
-    SI on veut tout le système, il faut faire une boucle
-    for i in sys
-        recomposition(i)
+    Parameters
+    ----------
+    terms_list: list 
+        a list of lists of lists like this :
+        [[a],[[c],[b]] = [[[a],[b]],[c]]
+        
+    Returns
+    -------
+    sympy.core.relational.Equality:
+        reconstitues the equality based on terms_list :
+        a+c*b = a*b+c
     """
     left = terms_list[0]
     right = terms_list[1]
@@ -83,14 +184,28 @@ def recomposition(terms_list):
         if cpt>1 :
             for j in range(0,len(right[i])):
                 if type(right[i][j])==sp.core.add.Add :
-                    testleft.append(right[i][j].args[0])
+                    testleft.append(0)
+                    for args in right[i][j].args :
+                        test_variable=[]
+                        pre_ximoinsundemi(args,test_variable)
+                        if len(test_variable)>0 :
+                            if test_variable[0]==True :
+                                testleft[len(testleft)-1]=testleft[len(
+                                    testleft)-1]+args
                 if type(right[i][j])==sp.core.add.Add :
-                    testright.append(right[i][j].args[1])
+                    testright.append(0)
+                    for args in right[i][j].args :
+                        test_variable=[]
+                        pre_xiplusundemi(args,test_variable)
+                        if len(test_variable)>0 :
+                            if test_variable[0]==True :
+                                testright[len(testright)-1]=testright[len(
+                                    testright)-1]+args
                 if (type(right[i][j])==sp.core.numbers.Integer or
                  (type(right[i][j])==sp.core.numbers.Float)):
                     constant.append(right[i][j])
-            eqright = eqright + np.prod(constant)*(np.prod(testleft) - 
-                np.prod(testright))
+            eqright = eqright + np.prod(constant)*(np.prod(testright) - 
+                np.prod(testleft))
         else :
             eqright = eqright + np.prod(right[i])
     eqleft=0
@@ -143,8 +258,6 @@ def flux_eq_1D(terms_list):
                 #On doit donc l'intégrer sur la cellule Ki
                 eqright[i][j]=eqright[i][j]*(xiplusundemi-ximoinsundemi)
             elif (type(eqright[i][j])== sp.core.function.Derivative):
-                if type(eqright[i][j].args[0]) == sp.core.mul.Mul:
-                    print("relou pour que ça marche parfaitement")
                 if eqright[i][j].args[1][0] == x :
                     if eqright[i][j].args[1][1] == 1 :
                         eqright[i][j] = (eqright[i][j].args[0].subs(
