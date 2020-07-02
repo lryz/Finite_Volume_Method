@@ -21,6 +21,7 @@ def diffusion_equation(D):
 
 def keller_segel(k1,k2,kc,beta,alpha):
     """
+        TODO: Explanation of the arguments. 
     """
     eq1 = sp.Eq(u(x,t).diff(t), k1*u(x,t).diff(x).diff(x) - k2*sp.Derivative(u(x,t)-u(x,t)**2,x)*c(x,t).diff(x).diff(x))
     eq2 = sp.Eq(c(x,t).diff(t), kc*c(x,t).diff(x).diff(x) - beta*c(x,t) + alpha*u(x,t)) 
