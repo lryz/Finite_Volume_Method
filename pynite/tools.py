@@ -81,6 +81,30 @@ def pre_symbols(expr,symbols):
                 symbols.append(type(arg))
         pre_symbols(arg,symbols)
 
+###DOESNT WORK
+##############
+def pre_subs_x(expr, sub_value):
+    """
+    Parameters
+    ----------
+    expr: sympy.core expression
+        any expression 
+        
+    Modifies
+    -------
+    every x into xi+1/2 expect dx
+    """
+    for arg in expr.args:
+        if type(arg)==sp.core.function.Derivative :
+            arg.subs({x : sub_value})
+            pre_subs_x(arg, sub_value)
+        else :
+            pre_subs_x(arg, sub_value)
+#################
+
+
+
+
 def decomposition_add(expr, ls) :
     """
     Parameters
@@ -91,7 +115,7 @@ def decomposition_add(expr, ls) :
         
     Modifies
     -------
-    ls : add to ls all terms of the addition 
+    ls : append to ls all terms of the addition 
     """
     if type(expr)==sp.core.add.Add :
         for arg in expr.args :
@@ -128,16 +152,16 @@ def decomposition(eq):
         a list of lists of lists that is interprated like this :
         [[a]+[[c]*[b]] = [[a]*[b]]+[c]]
     """
-    eqleft = sp.expand(eq.lhs)
-    eqright = sp.expand(eq.rhs)
+    eqleft = sp.expand(eq.lhs)      #expand to have an addition 
+    eqright = sp.expand(eq.rhs)     #expand to have an addition 
     sumlistleft=[]
     sumlistright=[]
     mullistleft=[]
     mullistright=[]
-    decomposition_add(eqleft,sumlistleft)
+    decomposition_add(eqleft,sumlistleft)   #Decomposition of addition
     if sumlistleft==[]:
         sumlistleft=[eqleft]
-    decomposition_add(eqright,sumlistright)
+    decomposition_add(eqright,sumlistright) #Decomposition of addition
     if sumlistright==[]:
         sumlistright=[eqright]
     for i in sumlistleft :
@@ -145,9 +169,9 @@ def decomposition(eq):
     for i in sumlistright :
         mullistright.append([])
     for i in range(0,len(sumlistleft)):
-        decomposition_mul(sumlistleft[i],mullistleft[i])
+        decomposition_mul(sumlistleft[i],mullistleft[i]) #Decomposition of each term of the addition
     for i in range(0,len(sumlistright)):
-        decomposition_mul(sumlistright[i],mullistright[i])
+        decomposition_mul(sumlistright[i],mullistright[i])  #Decomposition of each term of the addition
     for i in range(0,len(mullistleft)):
         if mullistleft[i]==[]:
             mullistleft[i] = [sumlistleft[i]]
@@ -162,7 +186,7 @@ def recomposition(terms_list):
     ----------
     terms_list: list 
         a list of lists of lists like this :
-        [[a],[[c],[b]] = [[[a],[b]],[c]]
+        [[a],[[c],[b]] , [[[a],[b]],[c]]
         
     Returns
     -------
@@ -175,13 +199,20 @@ def recomposition(terms_list):
     eqright=0
     for i in range(0,len(right)):
         cpt=0
+        #We work separatly on left and right 
         testleft=[]
         testright=[]
         constant=[]
+        #right
         for j in range(0,len(right[i])):
             if type(right[i][j])==sp.core.add.Add :
-                cpt=cpt+1
+                #This is a condition to know if we have some "specific" terms
+                #If we had in our system u(x,t)*c(x,t), after integration we'll have [u(xi+1/2,t)-u(xi-1/2,t),c(xi+1/2,t)-c(xi-1/2,t)].
+                #We need to recompose it this way : u(xi+1/2,t)*c(xi+1/2,t),-u(xi-1/2,t)*c(xi-1/2,t) instead of the typical way which would be :
+                #(u(xi+1/2,t)-u(xi-1/2,t))*(c(xi+1/2,t)-c(xi-1/2,t))
+                cpt=cpt+
         if cpt>1 :
+            #if the condition is respected we recompose as showed before
             for j in range(0,len(right[i])):
                 if type(right[i][j])==sp.core.add.Add :
                     testleft.append(0)
@@ -207,8 +238,11 @@ def recomposition(terms_list):
             eqright = eqright + np.prod(constant)*(np.prod(testright) - 
                 np.prod(testleft))
         else :
+            #We recompose 
             eqright = eqright + np.prod(right[i])
     eqleft=0
+    #left
+    #same as the right side
     for i in range(0,len(left)):
         cpt=0
         testleft=[]
@@ -235,17 +269,17 @@ def recomposition(terms_list):
 
 def flux_eq_1D(terms_list):
     """
-    La fonction permet d'intégrer sur x l'équation de diffusion de manière
-     "Formelle".
-    On va séparer les arguments de chaque côté de l'équation en prenant les
-     listes des arguments.
-    On est obligé de créer des listes bis car on ne peut pas assigner des 
-    valeurs à des variables de type "Derivative".
-
-    #WIP#
-    Pour l'instant, on ne peut pas rajouter de terme d'addition dans 
-    l'équation. On est obligé d'avoir des produits de chaque cotés.
+    Parameters
+    ----------
+    terms_list: list 
+        a list of lists of lists like this :
+        [[a],[[c],[b]] , [[[a],[b]],[c]]
+        
+    Returns
+    -------
+        list of integrated equation terms between xi+1/2 and xi-1/2
     """
+    #We separate left and right
     eqleft = terms_list[0]
     eqright = terms_list[1]
     for i in range(0,len(eqright)):
@@ -253,17 +287,35 @@ def flux_eq_1D(terms_list):
             if  ((type(eqright[i][j])==sp.core.numbers.Float or 
                 type(eqright[i][j])==sp.core.numbers.Integer)
                  and len(eqright[i])==1):
-                #C'est le cas ou on a un réel en addition et pas en 
-                #coefficient 
-                #On doit donc l'intégrer sur la cellule Ki
+                #case 1 : We integrate a float or an integer -> a*(xi+1/2 - xi-1/2)
                 eqright[i][j]=eqright[i][j]*(xiplusundemi-ximoinsundemi)
             elif (type(eqright[i][j])== sp.core.function.Derivative):
+                #case 2 : We integrate a derivative
                 if eqright[i][j].args[1][0] == x :
-                    if eqright[i][j].args[1][1] == 1 :
+                    #x derivative
+                    if type(eqright[i][j].args[0])==sp.core.add.Add :
+                        #derivative of an addition :
+                        tmp=[]
+                        decomp=[]
+                        decomposition_add(eqright[i][j].args[0],tmp)
+                        for k in range(0,len(tmp)):
+                            decomp.append([])
+                            decomposition_mul(tmp[k],decomp[k])
+                        for k1 in range(0,len(decomp)):
+                            for k2 in range(0,len(decomp[k1])):
+                                if type(decomp[k1][k2])==sp.core.function.Derivative :
+                                    decomp[k1][k2]=sp.Derivative(decomp[k1][k2].args[0].subs({x : xiplusundemi}),decomp[k1][k2].args[1])
+                                else :
+                                    decomp[k1][k2] = decomp[k1][k2].subs({x : xiplusundemi})
+                            decomp[k1]=np.prod(decomp[k1])
+                        eqright[i][j] = np.sum(decomp)-np.sum(decomp).subs({xiplusundemi : ximoinsundemi})
+                    elif eqright[i][j].args[1][1] == 1 :
+                        #Simple derivative
                         eqright[i][j] = (eqright[i][j].args[0].subs(
                             {x : xiplusundemi}) 
                         - eqright[i][j].args[0].subs({x : ximoinsundemi}))
                     else :
+                        #Multiple derivative
                         eqright[i][j] = (sp.Derivative(
                             eqright[i][j].args[0].subs({x : xiplusundemi})
                         ,(eqright[i][j].args[1])[0],(eqright[i][j].args[1])[1]
@@ -273,6 +325,7 @@ def flux_eq_1D(terms_list):
                            (eqright[i][j].args[1])[0],
                            (eqright[i][j].args[1])[1]-1))
                 elif eqright[i][j].args[1][0] == t :
+                    #t derivative -> same as a float
                     eqright[i][j]=eqright[i][j].subs(
                         {x : xi})*(xiplusundemi-ximoinsundemi)
             elif type(type(eqright[i][j]==sp.core.function.UndefinedFunction)):
@@ -308,14 +361,27 @@ def flux_eq_1D(terms_list):
     return [eqleft,eqright]
 
 def flux_sys_1D(sys):
+    """
+    Parameters
+    ----------
+    sys: list 
+           a list of decomposed equations ([eq1,eq2,eq3....])
+        
+    Returns
+    -------
+        list of integrated equations between xi+1/2 and xi-1/2
+    """
     tmp=[]
     if type(sys)== list:
+        #test if it's a list of equations
         test=[]
         for i in sys :
             test.append(decomposition(i))
         for i in test:
+            #we work equation per equation
             tmp.append(flux_eq_1D(i))
     else :
+        #if it's a single equation
         test = decomposition(sys)
         tmp = flux_dimension1_eq(test)
     return tmp

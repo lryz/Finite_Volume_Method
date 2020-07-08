@@ -126,7 +126,9 @@ def animation_matrix(sys_matrix,vectors_init, mesh, start, end, time_step):
     fig, ax = plt.subplots( nrows=1, ncols=1 )
     ax.set( ylim=(0, 1))
     ax.plot(mesh,vectors_init[0])
+    plt.pause(0.1)
     while start < end :
+        print(start)
         start = start + time_step
         matrix_sys = calcul_matrices(sys_matrix,vectors_init, mesh, start, end, time_step)
         for i in range(0,len(vectors_init)):
@@ -140,7 +142,7 @@ def animation_matrix(sys_matrix,vectors_init, mesh, start, end, time_step):
 
 def calcul_matrices(sys_matrix,vectors, mesh, start, end, time_step):
     ######
-    #ça fonctionne pour un maillage régulier mais ça marchera surement pas pour un autre type de maillage (jsp comment remplacer xi-1 au bord gauche et x+1 au bord droite)
+    #ça fonctionne pas encore jsp pk
     n = len(mesh)
     cpt=0
     for lines in sys_matrix :
@@ -178,12 +180,12 @@ def calcul_matrices(sys_matrix,vectors, mesh, start, end, time_step):
                             {symbols[tmp](xiplusundemi,tn)
                          : (vectors[tmp][len(vectors[tmp])-1]+
                             vectors[tmp][len(vectors[tmp])-2])/2
-                         ,symbols[tmp](ximoinsundemi,tn) : 
-                         (vectors[tmp][len(vectors[tmp])-3]+vectors[tmp][len(vectors[tmp])-2])/2})
+                         ,symbols[tmp](ximoinsundemi,tn) : 0})
+                         #(vectors[tmp][len(vectors[tmp])-3]+vectors[tmp][len(vectors[tmp])-2])/2})
                 matrix[(n-1)*n + j]=matrix[(n-1)*n + j].subs({xi : mesh[n-2], Deltat : time_step,
                      ximoinsun : mesh[n-3],xiplusun : mesh[n-1],
                      xiplusundemi : middle(mesh[n-1],mesh[n-2]),
-                     ximoinsundemi : middle(mesh[n-3],mesh[n-2]),})
+                     ximoinsundemi : middle(mesh[n-2],mesh[n-3]),})
             matrix = np.dot(matrix,sp.eye(n))
             cpt+=1
     return sys_matrix
