@@ -210,7 +210,7 @@ def recomposition(terms_list):
                 #If we had in our system u(x,t)*c(x,t), after integration we'll have [u(xi+1/2,t)-u(xi-1/2,t),c(xi+1/2,t)-c(xi-1/2,t)].
                 #We need to recompose it this way : u(xi+1/2,t)*c(xi+1/2,t),-u(xi-1/2,t)*c(xi-1/2,t) instead of the typical way which would be :
                 #(u(xi+1/2,t)-u(xi-1/2,t))*(c(xi+1/2,t)-c(xi-1/2,t))
-                cpt=cpt+
+                cpt=cpt+1
         if cpt>1 :
             #if the condition is respected we recompose as showed before
             for j in range(0,len(right[i])):
