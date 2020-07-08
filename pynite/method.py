@@ -10,10 +10,15 @@ Deltat = sp.Symbol('\Delta t')
 
 def euler_forward(equation):
     """
-    On suppose que l'équation est "triée" c'est à dire que la partie gauche contient les dérivées par rapport à t
-    Cette fonction va renvoyer le schéma explicite sous forme d'une equation.
-    On va ensuite pourvoir la décomposer
-    Et on va donc ensuite pouvoir la passer sous forme matricielle
+    Euler forward method
+    Parameters
+    ----------
+    equation : 
+        decomposed equation 
+        
+    Returns
+    -------
+        decomposed equation after replacing du(x,t)/dt by ((ux,tn+1)-u(x,tn))/deltat and all others t by tn
     """
     left = equation[0]
     for i in range(0,len(left)):
@@ -21,9 +26,11 @@ def euler_forward(equation):
         for j in range(0,len(left[i])):
             if type(left[i][j]) == sp.core.function.Derivative :
                 if left[i][j].args[1][0] == t :
+                    #replacing du(x,t)/dt by ((ux,tn+1)-u(x,tn))/deltat
                     left[i][j] = (left[i][j].args[0].subs({t : tnplusun}) - left[i][j].args[0].subs({t : tn}))/Deltat
     right=equation[1]
     for i in range(0,len(right)):
         for j in range(0,len(right[i])):
+            #replacing t by tn
             right[i][j]= right[i][j].subs({t : tn})
     return [left,right]
