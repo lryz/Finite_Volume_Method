@@ -13,11 +13,11 @@ import numpy as np
 ## Definition of the constants
 # Space :
 dim = 1   # dimension
-L = 1     # length of the domain
-dx = 0.1  # grid step
+L = 4    # length of the domain
+dx = 0.5  # grid step
 
 # Temporal
-dt = 0.0001 # time step
+dt = 0.00000001 # time step
 T = 1    # End time
 
 # Model
@@ -63,7 +63,9 @@ maillage = pn.regular_mesh_1D(0,L,dx)
 
 matrices_l1 = pn.matrix_equation(explicite_factorise[0],maillage)
 matrices_l2 = pn.matrix_equation(explicite_factorise[1],maillage)
+sp.preview(matrices_l1, viewer='file', filename='mat1.png')
+sp.preview(matrices_l2, viewer='file', filename='mat2.png')
 u0=np.random.rand(len(maillage))*0.5
 c0=np.random.rand(len(maillage))*0.5
-
+print("pre_animation")
 pn.animation_matrix([matrices_l1,matrices_l2],[u0,c0],maillage, 0, T ,dt)
