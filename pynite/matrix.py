@@ -35,25 +35,29 @@ def equation_factorisation(equation):
     left = equation[0]
     right = equation[1]
     coef = []
+    sp.pprint(left)
     for i in range(0,len(left)):
         for j in range(0,len(left[i])):
             if type(type(left[i][j]))==sp.core.function.UndefinedFunction :
                 if left[i][j].args[1]==tn :
-                    right.append([])
-                    for k in range(0,len(left[i])):
-                        right[len(right)-1].append(-left[i][k])
-                    left[i]=[0]
+                    left[i][j]=-left[i][j]
+                    right.append(copy.deepcopy(left[i]))
+                    left[i][j]=0
                 elif left[i][j].args[1]==tnplusun :
                     coef.append([])
                     for k in range(0,len(left[i])):
                         if k!=j:
                             coef[len(coef)-1].append(left[i][k])
                             left[i][k]=1
+
+    sp.pprint(left)
     sum_coef=0
     for i in range(0,len(coef)):
         sum_coef = sum_coef+np.prod(coef[i])
+    sp.pprint(1/sum_coef)
     for i in range(0,len(right)):
         right[i].append(sp.simplify(1/sum_coef))
+
     #A partir d'ici tout est à droite, il ne reste plus qu'à factoriser.
     #Cependant comme on ne connais pas forcément à l'avance la notation des variables (u et c), on doit les retrouver.
     variables = []
