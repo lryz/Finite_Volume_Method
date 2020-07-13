@@ -66,32 +66,28 @@ def equation_factorisation(equation):
                         variables.append(right[i][j])
                     if type(right[i][j]) not in symbole_variable:
                         symbole_variable.append(type(right[i][j]))
-    equation = recomposition([left,right])
-    rhs_facto = equation.rhs.factor(variables)
+
+    #################################
+    #Pas bon à partir de la
+    ################################
+
     args_mul = []
     coef=[]
     taille = len(symbole_variable)
-    args_variables = [[0 for i in range(0,3)] for i in range(0,taille)]
-    test=[]
-    decomposition_mul(rhs_facto,args_mul)
-    for i in range(0,len(args_mul)):
-        if type(args_mul[i])!=sp.core.add.Add :
-            coef.append(args_mul[i])
-        else :
-            for k in range(0,len(args_mul[i].args)):
-                test.append([])
-                decomposition_mul(args_mul[i].args[k],test[k])
-                for j in range(0,len(test[k])):
-                    if type(test[k][j]) in symbole_variable :
-                        index = symbole_variable.index(
-                                type(test[k][j]))
-                        if(test[k][j].args[0])==ximoinsun :
-                            args_variables[index][0]=sp.simplify(np.prod(coef)*test[k][0])
-                        elif(test[k][j].args[0])==xi :
-                            args_variables[index][1]=sp.simplify(np.prod(coef)*test[k][0])
-                        elif(test[k][j].args[0])==xiplusun :
-                            args_variables[index][2]=sp.simplify(np.prod(coef)*test[k][0])
-    return (args_variables, symbole_variable)
+    args_variables_test = [[0 for i in range(0,3)] for i in range(0,taille)]
+    for i in range(0,len(right)) :
+        for j in range(0,len(right[i])):
+            if right[i][j] in variables :
+                if right[i][j].args[0] == ximoinsun:
+                    index = symbole_variable.index(type(right[i][j]))
+                    args_variables_test[index][0] = np.prod(right[i][0:j]+right[i][j+1:len(right[i])]) + args_variables_test[index][0]
+                elif right[i][j].args[0] == xi:
+                    index = symbole_variable.index(type(right[i][j]))
+                    args_variables_test[index][1] = np.prod(right[i][0:j]+right[i][j+1:len(right[i])]) + args_variables_test[index][1]
+                elif right[i][j].args[0] == xiplusun:
+                    index = symbole_variable.index(type(right[i][j]))
+                    args_variables_test[index][2] = np.prod(right[i][0:j]+right[i][j+1:len(right[i])]) + args_variables_test[index][2]
+    return (args_variables_test, symbole_variable)
 
 def matrix_equation(explicite_factorise,maillage):
     equations = explicite_factorise[0]
@@ -113,10 +109,8 @@ def matrix_equation(explicite_factorise,maillage):
         else :
             matrix[i][0][0]=equations[i][1]
             matrix[i][taille-1][taille-1]=equations[i][1]
-        if sp.Matrix(matrix[i]).is_diagonal():
-            matrix_sympy.append(sp.Matrix(matrix[i]))
-        else :
-            matrix_sympy.append(sp.Matrix(matrix[i]))
+        matrix_sympy.append(sp.Matrix(matrix[i]))
+
     return matrix_sympy
 
 
@@ -272,6 +266,7 @@ def animation_reworked(system,vectors,symbols,mesh,start,stop,time_step):
                 test[i].append(False)
     fig, ax = plt.subplots( nrows=1, ncols=1 )
     ax.plot(mesh,vectors[0])
+    ax.set( ylim=(-0.5, 2))
     plt.pause(0.1)
     while start < stop :
         start += time_step
@@ -287,5 +282,10 @@ def animation_reworked(system,vectors,symbols,mesh,start,stop,time_step):
                 tmp2=np.dot(vectors[j],np.array(system_copy[len(sys)-1-i][j]).astype(np.float64))+tmp2
             vectors[len(vectors)-i-1] = tmp2
         ax.clear()
+        ax.set( ylim=(-0.5, 2))
         ax.plot(mesh,vectors[0],'r')
         plt.pause(0.1)
+
+############################################
+#J'essaye un nouveau truc
+###########################################

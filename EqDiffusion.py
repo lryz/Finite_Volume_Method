@@ -55,7 +55,7 @@ def initialisation_aleatoire(nbr_pts):
     u=np.ones(nbr_pts)
     for i in range(0,nbr_pts):
         u[i]=u[i]+random()
-    return u eq1eq1
+    return u 
 
 def calcul_milieu(debut,fin):
     return (debut+fin)/2
@@ -300,6 +300,7 @@ euler_explicite = schema_explicite(expr)
 sp.preview(euler_explicite, viewer='file', filename='explicite.png')
 maillage = maillage1D_regulier(0,1,0.02)
 vecteurdescoeffcients = calcul_coeffs(euler_explicite)
+sp.preview(vecteurdescoeffcients, viewer='file', filename='coeffs_test.png')
 mat = creation_matrice(vecteurdescoeffcients, maillage, 0.01)
 print(mat)
 u_init=np.ones((len(maillage)))
