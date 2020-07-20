@@ -386,3 +386,33 @@ def flux_sys_1D(sys):
         tmp = flux_dimension1_eq(test)
     return tmp
 
+def recomposition_basic_expression(terms_list):
+    """
+    Parameters
+    ----------
+    terms_list: list 
+        a list of lists of lists like this :
+        [[a],[[c],[b]] , [[[a],[b]],[c]]
+        
+    Returns
+    -------
+    sympy.core.relational.Equality:
+        reconstitues the equality based on terms_list :
+        a+c*b = a*b+c
+    """
+    val=0
+    for i in range(0,len(terms_list)):
+        val=val+np.prod(terms_list[i])
+    return val
+
+def decomposition_basic_expression(expression):
+    tmp = expression.expand()
+    decomp=[]
+    for i in range(0,len(tmp.args)):
+        if type(tmp.args[i])==sp.core.mul.Mul :
+            decomp.append([])
+            for j in range(0,len(tmp.args[i].args)):
+                decomp[len(decomp)-1].append(tmp.args[i].args[j])
+        else : 
+            decomp.append([tmp.args[i]])
+    return decomp
