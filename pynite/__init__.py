@@ -2,7 +2,7 @@ import sympy as sp
 import numpy as np
 import matplotlib.pyplot as plt
 from random import *
-from pynite.matrix import *
+from pynite.matrix2 import *
 from pynite.system import *
 from pynite.mesh import *
 from pynite.method import *

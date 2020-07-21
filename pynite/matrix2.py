@@ -135,8 +135,8 @@ def matrix_expression(expression,mesh):
         matrix[i][0][1]=equations[i][2]
         matrix[i][taille-1][taille-2]=equations[i][0]
         if equations[i][0] != 0 :
-            matrix[i][0][0]=-matrix[i][0][1]
-            matrix[i][taille-1][taille-1]=-matrix[i][taille-1][taille-2]
+            matrix[i][0][0]=equations[i][1]+equations[i][0]
+            matrix[i][taille-1][taille-1]=equations[i][1]+equations[i][2]
         else :
             matrix[i][0][0]=equations[i][1]
             matrix[i][taille-1][taille-1]=equations[i][1]
@@ -172,11 +172,11 @@ def matrix_sub(matrix, mesh, time_step):
         matrix[0]=matrix[0].subs({xi : mesh[0], Deltat : time_step,
                      xiplusun : mesh[1],
                      xiplusundemi : middle(mesh[0],mesh[1]),
-                     ximoinsundemi : 0})
+                     ximoinsundemi : mesh[0]-middle(mesh[0],mesh[1])})
         matrix[1]=matrix[1].subs({xi : mesh[0], Deltat : time_step,
                      xiplusun : mesh[1],
                      xiplusundemi : middle(mesh[0],mesh[1]),
-                     ximoinsundemi : 0})
+                     ximoinsundemi : mesh[0]-middle(mesh[0],mesh[1])})
         for i in range(1,n-1):
             matrix[i*n + i] = matrix[i*n + i].subs({xi : mesh[i], Deltat : time_step,
                      xiplusun : mesh[i+1], ximoinsun : mesh[i-1],
@@ -190,14 +190,14 @@ def matrix_sub(matrix, mesh, time_step):
                      xiplusun : mesh[i+1], ximoinsun : mesh[i-1],
                      xiplusundemi : middle(mesh[i],mesh[i+1]),
                      ximoinsundemi : middle(mesh[i],mesh[i-1])})
-        matrix[n**2-1]=matrix[n**2-1].subs({xi : mesh[n-2], Deltat : time_step,
-                     ximoinsun : mesh[n-1],
+        matrix[n**2-1]=matrix[n**2-1].subs({xi : mesh[n-1], Deltat : time_step,
+                     ximoinsun : mesh[n-2],
                      ximoinsundemi : middle(mesh[n-2],mesh[n-1]),
-                     xiplusundemi : 0})
-        matrix[n**2-2]=matrix[n**2-1].subs({xi : mesh[n-2], Deltat : time_step,
-                     ximoinsun : mesh[n-1],
+                     xiplusundemi : mesh[n-1]+mesh[n-1]-middle(mesh[n-1],mesh[n-2])})
+        matrix[n**2-2]=matrix[n**2-2].subs({xi : mesh[n-1], Deltat : time_step,
+                     ximoinsun : mesh[n-2],
                      ximoinsundemi : middle(mesh[n-2],mesh[n-1]),
-                     xiplusundemi : 0})
+                     xiplusundemi : mesh[n-1]+mesh[n-1]-middle(mesh[n-1],mesh[n-2])})
     return matrix
 
 
@@ -205,14 +205,14 @@ def matrix_sub(matrix, mesh, time_step):
 def matrix_subs_vector(matrix, vectors, symbols, mesh):
     n = len(vectors[1])
     for cpt in range(0,len(symbols)) :
-        matrix[0] = matrix[0].subs({symbols[cpt](middle(mesh[0],mesh[1]),tn) : middle(vectors[cpt][0],vectors[cpt][1])})
-        matrix[1] = matrix[1].subs({symbols[cpt](middle(mesh[0],mesh[1]),tn) : middle(vectors[cpt][0],vectors[cpt][1])})
+        matrix[0] = matrix[0].subs({symbols[cpt](mesh[0]-middle(mesh[0],mesh[1]),tn) : vectors[cpt][0],symbols[cpt](middle(mesh[0],mesh[1]),tn) : middle(vectors[cpt][0],vectors[cpt][1])})
+        matrix[1] = matrix[1].subs({symbols[cpt](middle(mesh[0],mesh[1]),tn) : middle(vectors[cpt][0],vectors[cpt][1]),symbols[cpt](mesh[0]-middle(mesh[0],mesh[1]),tn) : vectors[cpt][0]})
         for i in range(1,n-1):
             matrix[i*n + i] = matrix[i*n + i].subs({symbols[cpt](middle(mesh[i],mesh[i+1]),tn) : middle(vectors[cpt][i],vectors[cpt][i+1]), symbols[cpt](middle(mesh[i],mesh[i-1]),tn) : middle(vectors[cpt][i],vectors[cpt][i-1])})
             matrix[i*n + i-1] = matrix[i*n + i-1].subs({symbols[cpt](middle(mesh[i],mesh[i+1]),tn) : middle(vectors[cpt][i],vectors[cpt][i+1]), symbols[cpt](middle(mesh[i],mesh[i-1]),tn) : middle(vectors[cpt][i],vectors[cpt][i-1])})
             matrix[i*n + i+1] = matrix[i*n + i+1].subs({symbols[cpt](middle(mesh[i],mesh[i+1]),tn) : middle(vectors[cpt][i],vectors[cpt][i+1]), symbols[cpt](middle(mesh[i],mesh[i-1]),tn) : middle(vectors[cpt][i],vectors[cpt][i-1])})
-        matrix[n**2-1] = matrix[n**2-1].subs({symbols[cpt](middle(mesh[n-1],mesh[n-2]),tn) : middle(vectors[cpt][n-1],vectors[cpt][n-2])})
-        matrix[n**2-2] = matrix[n**2-2].subs({symbols[cpt](middle(mesh[n-2],mesh[n-1]),tn) : middle(vectors[cpt][n-1],vectors[cpt][n-2])})
+        matrix[n**2-1] = matrix[n**2-1].subs({symbols[cpt](mesh[n-1]+mesh[n-1]-middle(mesh[n-1],mesh[n-2]),tn) : vectors[cpt][n-1],symbols[cpt](middle(mesh[n-1],mesh[n-2]),tn) : middle(vectors[cpt][n-1],vectors[cpt][n-2])})
+        matrix[n**2-2] = matrix[n**2-2].subs({symbols[cpt](mesh[n-1]+mesh[n-1]-middle(mesh[n-1],mesh[n-2]),tn) : vectors[cpt][n-1],symbols[cpt](middle(mesh[n-1],mesh[n-2]),tn) : middle(vectors[cpt][n-1],vectors[cpt][n-2])})
     return matrix
 
 def matrix_subs_sys(sys_matrix, vectors,mesh, time_step):
@@ -234,7 +234,6 @@ def animation_reworked(system,vectors,mesh,start,stop,time_step):
     sys = matrix_subs_sys(system_copy,vectors,
     mesh ,time_step)
     symbols=sys[0][1][1]
-    print(symbols)
     mat_right=[]
     mat_inv=[]
     for lines in sys :
@@ -246,19 +245,24 @@ def animation_reworked(system,vectors,mesh,start,stop,time_step):
             if mat_right[i][j].is_symbolic()==False:
                 mat_right[i][j] = mat_inv[i]*mat_right[i][j]
     fig, ax = plt.subplots( nrows=1, ncols=1 )
+    ax.set( ylim=(0, 1))
     ax.plot(mesh,vectors[0])
     plt.pause(0.1)
     ####Jusque la on est à peu près bon
     while start < stop :
-        print(start)
-        #print(mat_right[0][1])
-        print(vectors)
         start += time_step
         system_copy=copy.deepcopy(mat_right)
         for ligne in range(0,len(system_copy)) :
             for mat in range(0,len(system_copy[ligne])) :
                 if system_copy[ligne][mat].is_symbolic() == True :
                     system_copy[ligne][mat] = mat_inv[ligne]*matrix_subs_vector(system_copy[ligne][mat], vectors, symbols ,mesh)
+                if system_copy[ligne][mat].is_symbolic() == True :
+                    system_copy[ligne][mat][0]=system_copy[ligne][mat][int(np.sqrt(len(system_copy[ligne][mat])))+1]
+                    system_copy[ligne][mat][1]=system_copy[ligne][mat][int(np.sqrt(len(system_copy[ligne][mat])))]
+                    system_copy[ligne][mat][len(system_copy[ligne][mat])-1]=system_copy[ligne][mat][len(system_copy[ligne][mat])-1-int(np.sqrt(len(system_copy[ligne][mat])))-1]
+                    print(system_copy[ligne][mat][len(system_copy[ligne][mat])-1-int(np.sqrt(len(system_copy[ligne][mat])))-2])
+                    system_copy[ligne][mat][len(system_copy[ligne][mat])-2]=system_copy[ligne][mat][len(system_copy[ligne][mat])-1-int(np.sqrt(len(system_copy[ligne][mat])))-2]
+#
         for i in range(0,len(vectors)):
             #On "remonte" le sytème en commençant par la dernière ligne
             tmp2=np.zeros(len(mesh))
@@ -266,6 +270,7 @@ def animation_reworked(system,vectors,mesh,start,stop,time_step):
                 tmp2=np.dot(vectors[j],np.array(system_copy[len(sys)-1-i][j]).astype(np.float64))+tmp2
             vectors[len(vectors)-i-1] = tmp2
         ax.clear()
+        ax.set( ylim=(0, 1))
         ax.plot(mesh,vectors[0],'r')
         plt.pause(1)
 
@@ -286,7 +291,7 @@ def animation_reworked_bis(system_matrix,vectors,mesh,start,stop,time_step):
                 test[i].append(False)
     fig, ax = plt.subplots( nrows=1, ncols=1 )
     ax.plot(mesh,vectors[0])
-    ax.set( ylim=(-0.5, 2))
+
     plt.pause(0.1)
     while start < stop :
         print(start)
