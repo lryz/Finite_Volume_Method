@@ -238,8 +238,13 @@ def animation_reworked(system,vectors,mesh,start,stop,time_step):
     mat_inv=[]
     for lines in sys :
         mat_left=lines[0][0][0]
-        mat_inv.append(mat_left.inv())
+        if mat_left.is_diagonal()==True :
+            mat_inv.append(mat_left.inv())
+        else :
+            mat_inv.append(mat_left.inv(method="LU"))
         mat_right.append(lines[1][0])
+    sp.preview(mat_left, viewer='file', filename='left.png')
+
     for i in range(0,len(mat_right)) :
         for j in range(0,len(mat_right[i])) :
             if mat_right[i][j].is_symbolic()==False:
@@ -247,22 +252,15 @@ def animation_reworked(system,vectors,mesh,start,stop,time_step):
     fig, ax = plt.subplots( nrows=1, ncols=1 )
     ax.set( ylim=(0, 1))
     ax.plot(mesh,vectors[0])
-    plt.pause(0.1)
-    ####Jusque la on est à peu près bon
+    plt.pause(0.01)
     while start < stop :
         start += time_step
+        print(start)
         system_copy=copy.deepcopy(mat_right)
         for ligne in range(0,len(system_copy)) :
             for mat in range(0,len(system_copy[ligne])) :
                 if system_copy[ligne][mat].is_symbolic() == True :
                     system_copy[ligne][mat] = mat_inv[ligne]*matrix_subs_vector(system_copy[ligne][mat], vectors, symbols ,mesh)
-                if system_copy[ligne][mat].is_symbolic() == True :
-                    system_copy[ligne][mat][0]=system_copy[ligne][mat][int(np.sqrt(len(system_copy[ligne][mat])))+1]
-                    system_copy[ligne][mat][1]=system_copy[ligne][mat][int(np.sqrt(len(system_copy[ligne][mat])))]
-                    system_copy[ligne][mat][len(system_copy[ligne][mat])-1]=system_copy[ligne][mat][len(system_copy[ligne][mat])-1-int(np.sqrt(len(system_copy[ligne][mat])))-1]
-                    print(system_copy[ligne][mat][len(system_copy[ligne][mat])-1-int(np.sqrt(len(system_copy[ligne][mat])))-2])
-                    system_copy[ligne][mat][len(system_copy[ligne][mat])-2]=system_copy[ligne][mat][len(system_copy[ligne][mat])-1-int(np.sqrt(len(system_copy[ligne][mat])))-2]
-#
         for i in range(0,len(vectors)):
             #On "remonte" le sytème en commençant par la dernière ligne
             tmp2=np.zeros(len(mesh))
@@ -270,44 +268,7 @@ def animation_reworked(system,vectors,mesh,start,stop,time_step):
                 tmp2=np.dot(vectors[j],np.array(system_copy[len(sys)-1-i][j]).astype(np.float64))+tmp2
             vectors[len(vectors)-i-1] = tmp2
         ax.clear()
-        ax.set( ylim=(0, 1))
+        ax.set(ylim=(0, 1))
         ax.plot(mesh,vectors[0],'r')
-        plt.pause(1)
+        plt.pause(0.01)
 
-############################################
-#J'essaye un nouveau truc
-###########################################
-
-def animation_reworked_bis(system_matrix,vectors,mesh,start,stop,time_step):
-    system_copy=copy.deepcopy(system_matrix)
-    sys = matrix_subs_sys(system_copy,vectors,mesh ,time_step)
-    test=[]
-    for i in range(0,len(sys)) :
-        test.append([])
-        for j in range(0,len(sys[i])) :
-            if sys[i][j].is_symbolic() == True :
-                test[i].append(True)
-            else :
-                test[i].append(False)
-    fig, ax = plt.subplots( nrows=1, ncols=1 )
-    ax.plot(mesh,vectors[0])
-
-    plt.pause(0.1)
-    while start < stop :
-        print(start)
-        start += time_step
-        system_copy=copy.deepcopy(sys)
-        for ligne in range(0,len(test)) :
-            for mat in range(0,len(test[ligne])) :
-                if test[ligne][mat] == True :
-                    system_copy[ligne][mat] = matrix_subs_vector(system_copy[ligne][mat], vectors, symbols ,mesh)
-        for i in range(0,len(vectors)):
-            #On "remonte" le sytème en commençant par la dernière ligne
-            tmp2=0
-            for j in range(0,len(sys[len(sys)-1-i])):
-                tmp2=np.dot(vectors[j],np.array(system_copy[len(sys)-1-i][j]).astype(np.float64))+tmp2
-            vectors[len(vectors)-i-1] = tmp2
-        ax.clear()
-        ax.set( ylim=(-0.5, 2))
-        ax.plot(mesh,vectors[0],'r')
-        plt.pause(0.1)

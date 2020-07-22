@@ -53,15 +53,15 @@ factorise.append(pn.equation_factorisation(schema_implicit[1]))
 sp.preview(factorise[0], viewer='file', filename='facto_ligne1.png')
 sp.preview(factorise[1], viewer='file', filename='facto_ligne2.png')
 
-mesh = pn.regular_mesh_1D(0,1,0.1)
+mesh = pn.regular_mesh_1D(0,1,0.02)
 time_step = 0.001
 
 system = pn.matrix_system(factorise,mesh)
-sp.preview(system, viewer='file', filename='sys.png')
+#sp.preview(system, viewer='file', filename='sys.png')
 
-u0 = np.random.rand(len(mesh))*0.5 + 0.2
-c0 = np.random.rand(len(mesh))*0.5 + 0.2
+u0 = np.random.rand(len(mesh))*0.1 + 0.5
+c0 = np.random.rand(len(mesh))*0.1 + 0.5
 
-pn.animation_reworked(system, [u0,c0],mesh,0,1, time_step)
+pn.animation_reworked(system, [u0,c0],mesh,0,10, time_step)
 
 

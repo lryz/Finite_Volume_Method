@@ -21,8 +21,8 @@ dt = 0.0001 # time step
 T = 10    # End time
 
 # Model
-D = 0.5 # diffusion coefficient
-Chi = 10 # Coeff of chemosensitivity
+D = 1 # diffusion coefficient
+Chi = 5 # Coeff of chemosensitivity
 
 ## Definition of unknowns at time n+1 and n
 u = sp.Function('u')
@@ -32,7 +32,7 @@ Unplusun = sp.Symbol('U__n+1')
 Cn = sp.Symbol('C__n')
 
 ## Creation of the equation 
-eq = pn.keller_segel(D,Chi,0.3,0.4,0.5)
+eq = pn.keller_segel(D,Chi,1,0.5,0.5)
 sp.preview(eq, viewer='file', filename='keller_segel.png')
 test=[]
 for i in eq :
@@ -47,27 +47,21 @@ test=[]
 for expr in keller_segel_integre :
     test.append(pn.finite_difference(pn.decomposition(expr)))
 
-schema_explicit=[]
+schema_implicit=[]
 for i in range(0, len(test)):
-    schema_explicit.append(pn.euler_forward(pn.decomposition(test[i])))
-    schema_explicit[i] = pn.recomposition(schema_explicit[i])
-    schema_explicit[i] = pn.decomposition(schema_explicit[i])
-sp.preview(schema_explicit[0], viewer='file', filename='schema_explicite_ligne1.png')
-sp.preview(schema_explicit[1], viewer='file', filename='schema_explicite_ligne2.png')
-explicite_factorise=[]
-for i in schema_explicit :
-    explicite_factorise.append(pn.equation_factorisation(i))
-sp.preview(explicite_factorise[0], viewer='file', filename='explicite_factorise_ligne1.png')
-sp.preview(explicite_factorise[1], viewer='file', filename='explicite_factorise_ligne2.png')
-sp.preview(explicite_factorise, viewer='file', filename='explicite_factorise.png')
+    schema_implicit.append(pn.euler_backward(pn.decomposition(test[i])))
+    schema_implicit[i] = pn.recomposition(schema_implicit[i])
+    schema_implicit[i] = pn.decomposition(schema_implicit[i])
+implicite_factorise=[]
+for i in schema_implicit :
+    implicite_factorise.append(pn.equation_factorisation(i))
 
-maillage = pn.regular_mesh_1D(0,L,dx)
+mesh = pn.regular_mesh_1D(0,L,dx)
 
-matrices_l1 = pn.matrix_equation(explicite_factorise[0],maillage)
-matrices_l2 = pn.matrix_equation(explicite_factorise[1],maillage)
+system = pn.matrix_system(implicite_factorise,mesh)
 #sp.preview(matrices_l1, viewer='file', filename='mat1.png')
 #sp.preview(matrices_l2, viewer='file', filename='mat2.png')
-u0=np.random.rand(len(maillage))
-c0=np.random.rand(len(maillage))
+u0=np.random.rand(len(mesh))
+c0=np.random.rand(len(mesh))
 
-pn.animation_reworked([matrices_l1,matrices_l2],[u0,c0],[u,c],maillage, 0, T ,dt)
+pn.animation_reworked(system, [u0,c0],mesh,0,T, dt)
