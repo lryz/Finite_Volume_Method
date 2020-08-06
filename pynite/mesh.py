@@ -16,3 +16,8 @@ def regular_mesh_1D(start,end,step):
 	N=int((end-start)/step+1)
 	mesh=np.linspace(start,end,N)
 	return mesh
+
+def reguar_mesh_2D(start_x,end_x,step_x,start_y,end_y,step_y):
+    x = regular_mesh_1D(start_x,end_x,step_x)
+    y = regular_mesh_1D(start_y,end_y,step_y)
+    return x,y

@@ -134,6 +134,10 @@ def decomposition_mul(expr, ls):
     -------
     ls : add to ls all terms of the multiplication
     """
+    if type(expr)==sp.core.mul.Pow :
+        if expr.args[1] == 2 :
+            ls[len(ls)-1]=expr.args[0]
+            ls.append(expr.args[0])
     if type(expr)==sp.core.mul.Mul :
         for arg in expr.args :
             ls.append(arg)
@@ -371,8 +375,9 @@ def flux_sys_1D(sys):
     -------
         list of integrated equations between xi+1/2 and xi-1/2
     """
-    tmp=[]
+
     if type(sys)== list:
+        tmp=[]
         #test if it's a list of equations
         test=[]
         for i in sys :
@@ -383,7 +388,7 @@ def flux_sys_1D(sys):
     else :
         #if it's a single equation
         test = decomposition(sys)
-        tmp = flux_dimension1_eq(test)
+        tmp = flux_eq_1D(test)
     return tmp
 
 def recomposition_basic_expression(terms_list):
@@ -412,7 +417,25 @@ def decomposition_basic_expression(expression):
         if type(tmp.args[i])==sp.core.mul.Mul :
             decomp.append([])
             for j in range(0,len(tmp.args[i].args)):
-                decomp[len(decomp)-1].append(tmp.args[i].args[j])
+                if type(tmp.args[i].args[j])==sp.core.mul.Pow and tmp.args[i].args[j].args[1]==2 :
+                    decomp[len(decomp)-1].append(tmp.args[i].args[j].args[0])
+                    decomp[len(decomp)-1].append(tmp.args[i].args[j].args[0])
+                else :
+                    decomp[len(decomp)-1].append(tmp.args[i].args[j])
         else : 
             decomp.append([tmp.args[i]])
+    for i in range(0,len(decomp)):
+        testxi=0
+        testnotxi=0
+        for j in range(0,len(decomp[i])):
+            #replacing t by tn
+            if type(type(decomp[i][j]))==sp.core.function.UndefinedFunction :
+                if decomp[i][j].args[0]!=xi :
+                    testxi=decomp[i][j]
+                else :
+                    testnotxi=decomp[i][j]
+        if (testxi!=0 and testnotxi!=0):
+            indicexi = decomp[i].index(testxi)
+            indicenotxi = decomp[i].index(testnotxi)
+            decomp[i][indicexi], decomp[i][indicenotxi] = decomp[i][indicenotxi], decomp[i][indicexi]
     return decomp

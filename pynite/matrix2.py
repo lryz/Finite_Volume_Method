@@ -44,6 +44,7 @@ def equation_factorisation(equation):
     left = decomposition_basic_expression(tmp)
     tmp  = recomposition_basic_expression(right)
     right = decomposition_basic_expression(tmp)
+    print(right)
     coef = []
     for i in range(0,len(left)):
         for j in range(0,len(left[i])):
@@ -54,7 +55,9 @@ def equation_factorisation(equation):
                     left[i]=[0]
     for i in range(0,len(right)):
         for j in range(0,len(right[i])):
-            if type(type(right[i][j]))==sp.core.function.UndefinedFunction :
+            if right[i]==[0]:
+                0==0
+            elif type(type(right[i][j]))==sp.core.function.UndefinedFunction :
                 if right[i][j].args[1]==tnplusun :
                     right[i].append(-1)
                     left.append(copy.deepcopy(right[i]))
@@ -62,7 +65,6 @@ def equation_factorisation(equation):
 
     #A partir d'ici tout est à droite, il ne reste plus qu'à factoriser.
     #Cependant comme on ne connais pas forcément à l'avance la notation des variables (u et c), on doit les retrouver.
-    sp.preview([left,right], viewer='file', filename='tmp.png')
     variables_left = []
     symbole_variable_left = []
     for i in range(0,len(left)):
@@ -88,34 +90,41 @@ def equation_factorisation(equation):
     taille = len(symbole_variable_left)
     args_variables_left = [[0 for i in range(0,3)] for i in range(0,taille)]
     for i in range(0,len(left)) :
+        test=0
         for j in range(0,len(left[i])):
-            if left[i][j] in variables_left :
+            if left[i][j] in variables_left and test == 0:
                 if left[i][j].args[0] == ximoinsun:
                     index = symbole_variable_left.index(type(left[i][j]))
                     args_variables_left[index][0] = np.prod(left[i][0:j]+left[i][j+1:len(left[i])]) + args_variables_left[index][0]
+                    test=1
                 elif left[i][j].args[0] == xi:
                     index = symbole_variable_left.index(type(left[i][j]))
                     args_variables_left[index][1] = np.prod(left[i][0:j]+left[i][j+1:len(left[i])]) + args_variables_left[index][1]
+                    test=1
                 elif left[i][j].args[0] == xiplusun:
                     index = symbole_variable_left.index(type(left[i][j]))
                     args_variables_left[index][2] = np.prod(left[i][0:j]+left[i][j+1:len(left[i])]) + args_variables_left[index][2]
-
+                    test=1
     args_mul = []
     coef=[]
     taille = len(symbole_variable_right)
     args_variables_right = [[0 for i in range(0,3)] for i in range(0,taille)]
     for i in range(0,len(right)) :
+        test=0
         for j in range(0,len(right[i])):
-            if right[i][j] in variables_right :
+            if right[i][j] in variables_right and test==0:
                 if right[i][j].args[0] == ximoinsun:
                     index = symbole_variable_right.index(type(right[i][j]))
                     args_variables_right[index][0] = np.prod(right[i][0:j]+right[i][j+1:len(right[i])]) + args_variables_right[index][0]
+                    test=1
                 elif right[i][j].args[0] == xi:
                     index = symbole_variable_right.index(type(right[i][j]))
                     args_variables_right[index][1] = np.prod(right[i][0:j]+right[i][j+1:len(right[i])]) + args_variables_right[index][1]
+                    test=1
                 elif right[i][j].args[0] == xiplusun:
                     index = symbole_variable_right.index(type(right[i][j]))
                     args_variables_right[index][2] = np.prod(right[i][0:j]+right[i][j+1:len(right[i])]) + args_variables_right[index][2]
+                    test=1
     return ((args_variables_left, symbole_variable_left),(args_variables_right, symbole_variable_right))
 
 
@@ -203,16 +212,16 @@ def matrix_sub(matrix, mesh, time_step):
 
 
 def matrix_subs_vector(matrix, vectors, symbols, mesh):
-    n = len(vectors[1])
+    n = len(vectors[0])
     for cpt in range(0,len(symbols)) :
-        matrix[0] = matrix[0].subs({symbols[cpt](mesh[0]-middle(mesh[0],mesh[1]),tn) : vectors[cpt][0],symbols[cpt](middle(mesh[0],mesh[1]),tn) : middle(vectors[cpt][0],vectors[cpt][1])})
-        matrix[1] = matrix[1].subs({symbols[cpt](middle(mesh[0],mesh[1]),tn) : middle(vectors[cpt][0],vectors[cpt][1]),symbols[cpt](mesh[0]-middle(mesh[0],mesh[1]),tn) : vectors[cpt][0]})
+        matrix[0] = matrix[0].subs({symbols[cpt](mesh[0]-middle(mesh[0],mesh[1]),tn) : vectors[cpt][0],symbols[cpt](middle(mesh[0],mesh[1]),tn) : middle(vectors[cpt][0],vectors[cpt][1]),symbols[cpt](mesh[0],tn) : vectors[cpt][0], symbols[cpt](mesh[0],tnplusun) : vectors[cpt][0]})
+        matrix[1] = matrix[1].subs({symbols[cpt](middle(mesh[0],mesh[1]),tn) : middle(vectors[cpt][0],vectors[cpt][1]),symbols[cpt](mesh[0]-middle(mesh[0],mesh[1]),tn) : vectors[cpt][0],symbols[cpt](mesh[0],tn) : vectors[cpt][0], symbols[cpt](mesh[0],tnplusun) : vectors[cpt][0]})
         for i in range(1,n-1):
-            matrix[i*n + i] = matrix[i*n + i].subs({symbols[cpt](middle(mesh[i],mesh[i+1]),tn) : middle(vectors[cpt][i],vectors[cpt][i+1]), symbols[cpt](middle(mesh[i],mesh[i-1]),tn) : middle(vectors[cpt][i],vectors[cpt][i-1])})
-            matrix[i*n + i-1] = matrix[i*n + i-1].subs({symbols[cpt](middle(mesh[i],mesh[i+1]),tn) : middle(vectors[cpt][i],vectors[cpt][i+1]), symbols[cpt](middle(mesh[i],mesh[i-1]),tn) : middle(vectors[cpt][i],vectors[cpt][i-1])})
-            matrix[i*n + i+1] = matrix[i*n + i+1].subs({symbols[cpt](middle(mesh[i],mesh[i+1]),tn) : middle(vectors[cpt][i],vectors[cpt][i+1]), symbols[cpt](middle(mesh[i],mesh[i-1]),tn) : middle(vectors[cpt][i],vectors[cpt][i-1])})
-        matrix[n**2-1] = matrix[n**2-1].subs({symbols[cpt](mesh[n-1]+mesh[n-1]-middle(mesh[n-1],mesh[n-2]),tn) : vectors[cpt][n-1],symbols[cpt](middle(mesh[n-1],mesh[n-2]),tn) : middle(vectors[cpt][n-1],vectors[cpt][n-2])})
-        matrix[n**2-2] = matrix[n**2-2].subs({symbols[cpt](mesh[n-1]+mesh[n-1]-middle(mesh[n-1],mesh[n-2]),tn) : vectors[cpt][n-1],symbols[cpt](middle(mesh[n-1],mesh[n-2]),tn) : middle(vectors[cpt][n-1],vectors[cpt][n-2])})
+            matrix[i*n + i] = matrix[i*n + i].subs({symbols[cpt](middle(mesh[i],mesh[i+1]),tn) : middle(vectors[cpt][i],vectors[cpt][i+1]), symbols[cpt](middle(mesh[i],mesh[i-1]),tn) : middle(vectors[cpt][i],vectors[cpt][i-1]), symbols[cpt](mesh[i],tn) : vectors[cpt][i], symbols[cpt](mesh[i],tnplusun) : vectors[cpt][i]})
+            matrix[i*n + i-1] = matrix[i*n + i-1].subs({symbols[cpt](middle(mesh[i],mesh[i+1]),tn) : middle(vectors[cpt][i],vectors[cpt][i+1]), symbols[cpt](middle(mesh[i],mesh[i-1]),tn) : middle(vectors[cpt][i],vectors[cpt][i-1]), symbols[cpt](mesh[i],tn) : vectors[cpt][i], symbols[cpt](mesh[i],tnplusun) : vectors[cpt][i]})
+            matrix[i*n + i+1] = matrix[i*n + i+1].subs({symbols[cpt](middle(mesh[i],mesh[i+1]),tn) : middle(vectors[cpt][i],vectors[cpt][i+1]), symbols[cpt](middle(mesh[i],mesh[i-1]),tn) : middle(vectors[cpt][i],vectors[cpt][i-1]), symbols[cpt](mesh[i],tn) : vectors[cpt][i], symbols[cpt](mesh[i],tnplusun) : vectors[cpt][i]})
+        matrix[n**2-1] = matrix[n**2-1].subs({symbols[cpt](mesh[n-1]+mesh[n-1]-middle(mesh[n-1],mesh[n-2]),tn) : vectors[cpt][n-1],symbols[cpt](middle(mesh[n-1],mesh[n-2]),tn) : middle(vectors[cpt][n-1],vectors[cpt][n-2]), symbols[cpt](mesh[n-1],tn) : vectors[cpt][n-1], symbols[cpt](mesh[n-1],tnplusun) : vectors[cpt][n-1]})
+        matrix[n**2-2] = matrix[n**2-2].subs({symbols[cpt](mesh[n-1]+mesh[n-1]-middle(mesh[n-1],mesh[n-2]),tn) : vectors[cpt][n-1],symbols[cpt](middle(mesh[n-1],mesh[n-2]),tn) : middle(vectors[cpt][n-1],vectors[cpt][n-2]), symbols[cpt](mesh[n-1],tn) : vectors[cpt][n-1], symbols[cpt](mesh[n-1],tnplusun) : vectors[cpt][n-1]})
     return matrix
 
 def matrix_subs_sys(sys_matrix, vectors,mesh, time_step):
@@ -228,45 +237,88 @@ def matrix_subs_sys(sys_matrix, vectors,mesh, time_step):
             matrix_right[i]=matrix_sub(matrix_right[i],mesh,time_step)
     return sys_matrix
 
+def matrix_subs_equation(sys_matrix, vectors, mesh, time_step):
+    left=sys_matrix[0]
+    right=sys_matrix[1]
+    matrix_left=left[0]
+    symbols_left=left[1]
+    matrix_right=right[0]
+    symbols_right=right[1]
+    matrix_left[0]=matrix_sub(matrix_left[0],mesh,time_step)
+    for i in range(0,len(symbols_right)):
+        matrix_right[i]=matrix_sub(matrix_right[i],mesh,time_step)
+    return sys_matrix
 
 def animation_reworked(system,vectors,mesh,start,stop,time_step):
     system_copy=copy.deepcopy(system)
-    sys = matrix_subs_sys(system_copy,vectors,
-    mesh ,time_step)
-    symbols=sys[0][1][1]
-    mat_right=[]
-    mat_inv=[]
-    for lines in sys :
-        mat_left=lines[0][0][0]
-        if mat_left.is_diagonal()==True :
+    if len(vectors)!=1 :
+        sys = matrix_subs_sys(system_copy,vectors,
+        mesh ,time_step)
+        symbols=sys[0][1][1]
+        mat_right=[]
+        mat_inv=[]
+        for lines in sys :
+            mat_left=lines[0][0][0]
+            if mat_left.is_diagonal()==True :
+                mat_inv.append(mat_left.inv())
+            else :
+                mat_inv.append(mat_left.inv(method="LU"))
+            mat_right.append(lines[1][0])
+
+        for i in range(0,len(mat_right)) :
+            for j in range(0,len(mat_right[i])) :
+                if mat_right[i][j].is_symbolic()==False:
+                    mat_right[i][j] = mat_inv[i]*mat_right[i][j]
+    else :
+        sys = matrix_subs_equation(system_copy,vectors,mesh,time_step)
+        symbols=sys[0][1]
+        test=0
+        mat_left=system_copy[0][0][0]
+        mat_right=system_copy[1][0]
+        mat_inv=[]
+        if mat_left.is_symbolic()==True :
+            test=1
+            mat_inv.append(mat_left)
+        elif mat_left.is_diagonal()==True :
             mat_inv.append(mat_left.inv())
         else :
             mat_inv.append(mat_left.inv(method="LU"))
-        mat_right.append(lines[1][0])
-    sp.preview(mat_left, viewer='file', filename='left.png')
-
-    for i in range(0,len(mat_right)) :
-        for j in range(0,len(mat_right[i])) :
-            if mat_right[i][j].is_symbolic()==False:
-                mat_right[i][j] = mat_inv[i]*mat_right[i][j]
+        for i in range(0,len(mat_right)) :
+            if mat_right[i].is_symbolic()==False:
+                mat_right[i] = mat_inv[i]*mat_right[i]
     fig, ax = plt.subplots( nrows=1, ncols=1 )
     ax.set( ylim=(0, 1))
     ax.plot(mesh,vectors[0])
     plt.pause(0.01)
     while start < stop :
         start += time_step
-        print(start)
         system_copy=copy.deepcopy(mat_right)
-        for ligne in range(0,len(system_copy)) :
-            for mat in range(0,len(system_copy[ligne])) :
-                if system_copy[ligne][mat].is_symbolic() == True :
-                    system_copy[ligne][mat] = mat_inv[ligne]*matrix_subs_vector(system_copy[ligne][mat], vectors, symbols ,mesh)
-        for i in range(0,len(vectors)):
-            #On "remonte" le sytème en commençant par la dernière ligne
-            tmp2=np.zeros(len(mesh))
-            for j in range(0,len(system_copy[len(system_copy)-1-i])):
-                tmp2=np.dot(vectors[j],np.array(system_copy[len(sys)-1-i][j]).astype(np.float64))+tmp2
-            vectors[len(vectors)-i-1] = tmp2
+        if len(vectors)!=1 :
+            for ligne in range(0,len(system_copy)) :
+                for mat in range(0,len(system_copy[ligne])) :
+                    if system_copy[ligne][mat].is_symbolic() == True :
+                        system_copy[ligne][mat] = mat_inv[ligne]*matrix_subs_vector(system_copy[ligne][mat], vectors, symbols ,mesh)
+        else :
+            for mat in range(0,len(system_copy)):
+                if system_copy[mat].is_symbolic()==True :
+                    if test==1 :
+                        #Pas encore bon pour l'equation de diffusion en implicite avec D(u) = D*u(x,t)
+                        mat_inv_copy = copy.deepcopy(mat_inv[0])
+                        inv = matrix_subs_vector(mat_inv_copy, vectors, symbols ,mesh).inv()
+                        system_copy[mat] = inv*matrix_subs_vector(system_copy[mat], vectors, symbols ,mesh)
+                    else :
+                        system_copy[mat] = mat_inv[0]*matrix_subs_vector(system_copy[mat], vectors, symbols ,mesh)
+
+        if len(vectors)!=1 :
+            for i in range(0,len(vectors)):
+                #On "remonte" le sytème en commençant par la dernière ligne
+                tmp2=np.zeros(len(mesh))
+                for j in range(0,len(system_copy[len(system_copy)-1-i])):
+                    tmp2=np.dot(vectors[j],np.array(system_copy[len(sys)-1-i][j]).astype(np.float64))+tmp2
+                vectors[len(vectors)-i-1] = tmp2
+        else :
+            vectors[0]=np.dot(vectors[0],np.array(system_copy[0]))
+
         ax.clear()
         ax.set(ylim=(0, 1))
         ax.plot(mesh,vectors[0],'r')
